@@ -1,0 +1,10 @@
+CHANGELOG.txt
+LICENSE.txt
+MANIFEST.in
+README.txt
+setup.py
+Peptide_Chef/__init__.py
+Peptide_Chef.egg-info/PKG-INFO
+Peptide_Chef.egg-info/SOURCES.txt
+Peptide_Chef.egg-info/dependency_links.txt
+Peptide_Chef.egg-info/top_level.txt
