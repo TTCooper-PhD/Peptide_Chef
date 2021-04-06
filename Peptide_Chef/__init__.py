@@ -196,8 +196,83 @@ class Scales:
         mass_list = [mass.get(aa,0.0)for aa in peptide]
         pep_mass=sum(mass_list)
         return pep_mass
+    
+    def Peptide_IPC(peptide,start_pH=6.51,Epsilon=0.01,):
+        IPC_score={'Cterm': 2.383, 'pKAsp': 3.887, 'pKGlu': 4.317, 'pKCys': 8.297, 'pKTyr': 10.071, 'pk_his': 6.018, 'Nterm': 9.564, 'pKLys': 10.517, 'pKArg': 12.503}
+        pKCterm = IPC_score['Cterm']
+        pKAsp = IPC_score['pKAsp']
+        pKGlu = IPC_score['pKGlu']
+        pKCys = IPC_score['pKCys']
+        pKTyr = IPC_score['pKTyr']
+        pKHis = IPC_score['pk_his']
+        pKNterm = IPC_score['Nterm']
+        pKLys = IPC_score['pKLys'] 
+        pKArg = IPC_score['pKArg']
+        pH = start_pH      
+        pHprev = 0.0         
+        pHnext = 14.0        
+        E = Epsilon  
+        temp = 0.01
+        nterm=peptide[0]
+        cterm=peptide[-1]
+    #will now cycle through all peptides until a pH within the epsilon is found       
+        while 1:             
+            QN1=-1.0/(1.0+pow(10,(pKCterm-pH)))                                        
+            QN2=-peptide.count('D')/(1.0+pow(10,(pKAsp-pH)))           
+            QN3=-peptide.count('E')/(1.0+pow(10,(pKGlu-pH)))           
+            QN4=-peptide.count('C')/(1.0+pow(10,(pKCys-pH)))           
+            QN5=-peptide.count('Y')/(1.0+pow(10,(pKTyr-pH)))        
+            QP1=peptide.count('H')/(1.0+pow(10,(pH-pKHis)))            
+            QP2=1.0/(1.0+pow(10,(pH-pKNterm)))                
+            QP3=peptide.count('K')/(1.0+pow(10,(pH-pKLys)))           
+            QP4=peptide.count('R')/(1.0+pow(10,(pH-pKArg)))            
+            NQ=QN1+QN2+QN3+QN4+QN5+QP1+QP2+QP3+QP4
 
+            if NQ<0.0:                                  
+                temp = pH
+                pH = pH-((pH-pHprev)/2.0)
+                pHnext = temp
 
+            else:
+                temp = pH
+                pH = pH + ((pHnext-pH)/2.0)
+                pHprev = temp
+            #terminal condition, finding pI with given precision defined by Epsilon
+            if (pH-pHprev<E) and (pHnext-pH<E): 
+                return pH
+        
+    def Peptide_Neutral_pH(peptide):
+        z_dict = {'E': -1, 'D': -1, 'K': 1, 'R': 1} 
+        charge = [z_dict.get(aa, 0.0) for aa in peptide]
+        spark=sum(charge)
+        return(spark)
+    
+    def Peptide_GRAVY(peptide):
+        hydro = {     "A": 1.800,
+        "R": -4.500,
+        "N": -3.500,
+        "D": -3.500,
+        "C": 2.500,
+        "Q": -3.500,
+        "E": -3.500,
+        "G": -0.400,
+        "H": -3.200,
+        "I": 4.500,
+        "L": 3.800,
+        "K": -3.900,
+        "M": 1.900,
+        "F": 2.800,
+        "P": -1.600,
+        "S": -0.800,
+        "T": -0.700,
+        "W": -0.900,
+        "Y": -1.300,
+        "V": 4.200,
+        }
+        hydro_list = [hydro.get(aa,0.0)for aa in peptide]
+        hydro_sum=sum(hydro_list)
+        gravy=hydro_sum/len(hydro_list)
+        return gravy 
 def ButcherShop(df,target,identifier,rule, min_length=7,exception=None,max_length=100, pH=2.0, min_charge=2,missed=0):
     pep_dict = {}
     pep_dict_list = []
