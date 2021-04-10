@@ -280,9 +280,9 @@ def ButcherShop(df,target,identifier,rule, min_length=7,exception=None,max_lengt
     print(f'You order is being processed and the butcher is preparing your {rule}-cut protein(s)!')
     print("The butcher is working...")
     raw=df[[target, identifier]].set_index(identifier).to_dict()[target]
+    print(f"Generating {rule}-cut peptides based on {missed}-missed cleavages. ")
     for gene,peptide in raw.items():
         pep_dict[gene] = Cleaver(peptide,rule=rule,min_length=min_length,exception=exception,missed_cleavages=missed, max_length=max_length)
-    
     for k, lst in pep_dict.items():    
         d = {}
         for i in range(len(lst)):
@@ -295,13 +295,11 @@ def ButcherShop(df,target,identifier,rule, min_length=7,exception=None,max_lengt
             d.update({'Mass': int(Scales.Mass(lst[i]))})
             if d["z"] > 0:
                 d.update({'m/z': d["Mass"]/d['z']})
-            new_d = d.copy()
-            pep_dict_list.append(new_d)
+            pep_dict_list.append(d)
     print("Preparing your order...")
     pep_dict_list = [peptide for peptide in pep_dict_list if peptide['z'] >= int(min_charge)]
     print(f'Order is up! You have acquired {len(pep_dict_list)} peptides that are between {min_length} and {max_length} amino acids!')
     return pep_dict_list
-
 
 def Deli(z,meat_package=False):
     #z = list of dictionaries, keys must be equal thus will drop keys which are not cosistent between dictionaries
@@ -313,14 +311,14 @@ def Deli(z,meat_package=False):
     if meat_package == True:
         ham_counts=ham.groupby('gene').size().reset_index(name='counts')
         ham=ham.merge(ham_counts,how='left', on=['gene'])
-    ham.drop(ham.columns[0],axis=1,inplace=True)
+#     ham.drop(ham.columns[0],axis=1,inplace=True)
     columns=ham.columns.tolist()
     r = re.compile("^[pP]")
     P = list(filter(r.match, columns)) 
     peptide =str(P[0])
     ham[peptide]=ham[peptide].apply(",".join) # convert list within df to string
     return ham
-
+    
 #Handles Up to 3 Replicates (t_id1-3) per Selection, used for removing amino acids from N-terminal during PEAKS exports with enzyme that cleave at C-terminal. 
 #Can be used to remove M from N-terminal of peptides produced by enzymes which cleave at N-terminal of target aa. 
 def Butcher(df,ident1=None,ident2=None,ident3=None,t_id1=None,t_id2=None,t_id3=None,t_value=0,acid=["J","Z"],labels=list(),excel_mapper=True,excel_name=None):

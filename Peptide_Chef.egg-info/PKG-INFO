@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: Peptide-Chef
-Version: 0.0.7
+Version: 0.0.8
 Summary: Peptide Chef: A Python-based Tool for Proteomic Analyses and Datavisulization
 Home-page: https://github.com/TTCooper-PhD
 Author: Tyler T. Cooper
@@ -14,15 +14,15 @@ Description: Peptide_Chef Documentation 2021  Composed by:Tyler T. Cooper,PhD
         
         ===========
         
-        0.0.6 (04.06.2021)
+        0.0.7 (04.06.2021)
         ------------------
         Test Update
         
         ===========
         
-        0.0.7 (04.06.2021)
+        0.0.8 (04.010.2021)
         ------------------
-        Test Update
+        Update to Deli Function
         
 Keywords: Proteomics
 Platform: UNKNOWN

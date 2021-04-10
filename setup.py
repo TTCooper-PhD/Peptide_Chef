@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="Peptide_Chef",
-    version="0.0.7",
+    version="0.0.8",
     author="Tyler T. Cooper",
     author_email="tcoope2@uwo.ca",
     long_description=open('README.txt').read()+ '\n\n' + open('CHANGELOG.txt').read(),
