@@ -10,16 +10,16 @@ from pyteomics import fasta, parser, electrochem, mass
 from itertools import combinations
 from urllib.request import urlretrieve
 import gzip
+from functools import lru_cache
 
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------
 # File Handling Functions
 
+@lru_cache(maxsize=None)
 def CookBook(Species=None,homebrew=False, takeout=True,url=None,measure=False,target=None):
-    '''
-    # Use to import fasta.gz files directly from uniprot (Takeout) with a provided url (Default is Human) or from local folder using homebrew hyperparameter.
+    #Use to import fasta.gz files directly from uniprot (Takeout) with a provided url (Default is Human) or from local folder using homebrew hyperparameter.
     # Takeout is default, Takeout must be switched to False for Homebrew to be True.
     # accepts Uniprot format
-    '''
     ingredients=list()
     if url == None:
         url="https://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/reference_proteomes/Eukaryota/UP000005640/UP000005640_9606.fasta.gz"
@@ -92,6 +92,17 @@ def Peptide_Origin(origin,target,Origin_Key=None,Target_Key=None,Origin_Label=No
         target[Target_Label] = target[Target_Key].map(labeler)
     return target
 
+@lru_cache(maxsize=500)
+def Pep2Pro(protein,peptides):
+    protein = re.sub(r'[^A-Z]', '', protein)
+    mask = np.zeros(len(protein), dtype=np.int8)
+    for peptide in peptides:
+        indices = [m.start() for m in re.finditer(
+            '(?={})'.format(re.sub(r'[^A-Z]', '', peptide)), protein)]
+        for i in indices:
+            mask[i:i + len(peptide)] = 1
+    return mask.sum(dtype=float) / mask.size
+
 
 #------------------------------------------------------------------------------
 # Digestion and Peptide Handling
@@ -142,6 +153,7 @@ def update_rules(new_enzyme,new_rule,rules=rules):
     dictionary.update(new_enzyme=new_rule)
     return rules
 
+@lru_cache(maxsize=None)
 def Cleaver(sequence, rule, missed_cleavages=0, min_length=None, max_length=None, exception=None):
     peptides = []
     if rule in rules:
@@ -165,8 +177,9 @@ def Cleaver(sequence, rule, missed_cleavages=0, min_length=None, max_length=None
             cl += 1
         for j in trange[:cl - 1]:
             seq = sequence[cleavage_sites[j]:cleavage_sites[-1]]
-            if (seq and len(seq) >= min_length) & (len(seq) < max_length):
-                peptides.append(seq)
+            if (len(seq) >= min_length):
+                if (len(seq) <= max_length):
+                    peptides.append(seq)
     return peptides
 
 class Scales:
@@ -273,7 +286,7 @@ class Scales:
         hydro_sum=sum(hydro_list)
         gravy=hydro_sum/len(hydro_list)
         return gravy 
-def ButcherShop(df,target,identifier,rule, min_length=7,exception=None,max_length=100, pH=2.0, min_charge=2,missed=0):
+def ButcherShop(df,target,identifier,rule, min_length=7,exception=None,max_length=100, pH=2.0, min_charge=2.0,missed=0):
     pep_dict = {}
     pep_dict_list = []
     string_catcher=re.compile(r'^([A-Z]+)$')
@@ -284,20 +297,21 @@ def ButcherShop(df,target,identifier,rule, min_length=7,exception=None,max_lengt
     for gene,peptide in raw.items():
         pep_dict[gene] = Cleaver(peptide,rule=rule,min_length=min_length,exception=exception,missed_cleavages=missed, max_length=max_length)
     for k, lst in pep_dict.items():    
-        d = {}
-        for i in range(len(lst)):
+        cuts=len(lst)
+        for i in range(cuts):
+            d = {}
             d.update({k: lst[i]})
             d.update({'gene':k})
             d.update({'aa_comp': dict(parser.amino_acid_composition(lst[i]))})
-            d.update({'peptide': re.findall(string_catcher,lst[i])})
+            d.update({'peptide': lst[i]})
             d.update({'Length': len(lst[i])})
-            d.update({'z': int(round(electrochem.charge(lst[i], pH=pH)))})
-            d.update({'Mass': int(Scales.Mass(lst[i]))})
+            d.update({'z': float(round(electrochem.charge(lst[i], pH=pH),3))})
+            d.update({'Mass': float(Scales.Mass(lst[i]))})
             if d["z"] > 0:
                 d.update({'m/z': d["Mass"]/d['z']})
             pep_dict_list.append(d)
     print("Preparing your order...")
-    pep_dict_list = [peptide for peptide in pep_dict_list if peptide['z'] >= int(min_charge)]
+    pep_dict_list = [peptide for peptide in pep_dict_list if peptide['z'] >= float(min_charge)]
     print(f'Order is up! You have acquired {len(pep_dict_list)} peptides that are between {min_length} and {max_length} amino acids!')
     return pep_dict_list
 
