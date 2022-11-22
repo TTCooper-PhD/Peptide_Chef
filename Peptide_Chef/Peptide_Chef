@@ -2,11 +2,10 @@
 import numpy as np
 import pandas as pd
 from pandas import ExcelWriter
-import openpyxl
 import re
 import itertools as it
 from collections import deque
-from pyteomics import fasta, parser, electrochem, mass
+from pyteomics import parser, electrochem
 from itertools import combinations
 from urllib.request import urlretrieve
 import gzip
@@ -16,7 +15,7 @@ import json
 
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------
 # File Handling Functions
-class Cookbook(self)
+class Cookbook()
 
     def __init__(self,homebrew=False,len_min=7,len_max=60,db_url=None,species=None):
         self.homebrew=homebrew
@@ -95,17 +94,6 @@ class Cookbook(self)
                     json.dump(df,j)
         print(f"Good to go Boss, {i} JSON files(s) Exported")
         
-
-
-
-
-
-
-
-
-
-
-    
     def PEAKS_Importer(csv,drop_OG=True):
         df=pd.read_csv(csv)
         df[["Protein","Y"]]=df['Protein Accession'].str.split("|",1,expand=True)
@@ -139,138 +127,7 @@ class Cookbook(self)
                 mask[i:i + len(peptide)] = 1
         return mask.sum(dtype=float) / mask.size
 
-
-#------------------------------------------------------------------------------
-# Digestion and Peptide Handling
-
-rules = {
-    'arg-c':         r'R',
-    'asp-n':         r'\w(?=D)',
-    'bnps-skatole' : r'W',
-    'caspase 1':     r'(?<=[FWYL]\w[HAT])D(?=[^PEDQKR])',
-    'caspase 2':     r'(?<=DVA)D(?=[^PEDQKR])',
-    'caspase 3':     r'(?<=DMQ)D(?=[^PEDQKR])',
-    'caspase 4':     r'(?<=LEV)D(?=[^PEDQKR])',
-    'caspase 5':     r'(?<=[LW]EH)D',
-    'caspase 6':     r'(?<=VE[HI])D(?=[^PEDQKR])',
-    'caspase 7':     r'(?<=DEV)D(?=[^PEDQKR])',
-    'caspase 8':     r'(?<=[IL]ET)D(?=[^PEDQKR])',
-    'caspase 9':     r'(?<=LEH)D',
-    'caspase 10':    r'(?<=IEA)D',
-    'chymotrypsin high specificity' : r'([FY](?=[^P]))|(W(?=[^MP]))',
-    'chymotrypsin low specificity':
-        r'([FLY](?=[^P]))|(W(?=[^MP]))|(M(?=[^PY]))|(H(?=[^DMPW]))',
-    'clostripain':   r'R',
-    'cnbr':          r'M',
-    'enterokinase':  r'(?<=[DE]{3})K',
-    'factor xa':     r'(?<=[AFGILTVM][DE]G)R',
-    'formic acid':   r'D',
-    'glutamyl endopeptidase': r'E',
-    'granzyme b':    r'(?<=IEP)D',
-    'hydroxylamine': r'N(?=G)',
-    'iodosobenzoic acid': r'W',
-    'lysc':          r'K',
-    'ntcb':          r'\w(?=C)',
-    'pepsin ph1.3':  r'((?<=[^HKR][^P])[^R](?=[FL][^P]))|'
-                     r'((?<=[^HKR][^P])[FL](?=\w[^P]))',
-    'pepsin ph2.0':  r'((?<=[^HKR][^P])[^R](?=[FLWY][^P]))|'
-                     r'((?<=[^HKR][^P])[FLWY](?=\w[^P]))',
-    'proline endopeptidase': r'(?<=[HKR])P(?=[^P])',
-    'proteinase k':  r'[AEFILTVWY]',
-    'staphylococcal peptidase i': r'(?<=[^E])E',
-    'thermolysin':   r'[^DE](?=[AFILMV])',
-    'thrombin':      r'((?<=G)R(?=G))|'
-                     r'((?<=[AFGILTVM][AFGILTVWA]P)R(?=[^DE][^DE]))',
-    'trypsin':       r'([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))',
-    'trypsin_exception': r'((?<=[CD])K(?=D))|((?<=C)K(?=[HY]))|((?<=C)R(?=K))|((?<=R)R(?=[HR]))',
-}
-
-def update_rules(new_enzyme,new_rule,rules=rules):
-    dictionary.update(new_enzyme=new_rule)
-    return rules
-
-
-class ButcherShop():
-
-    def __init__(self):
-        self.missed=0
-        self.min_len=6
-        self.max_len=100
-        self.rules = { 'arg-c':         r'R',
-        'asp-n':         r'\w(?=D)',
-        'bnps-skatole' : r'W',
-        'caspase 1':     r'(?<=[FWYL]\w[HAT])D(?=[^PEDQKR])',
-        'caspase 2':     r'(?<=DVA)D(?=[^PEDQKR])',
-        'caspase 3':     r'(?<=DMQ)D(?=[^PEDQKR])',
-        'caspase 4':     r'(?<=LEV)D(?=[^PEDQKR])',
-        'caspase 5':     r'(?<=[LW]EH)D',
-        'caspase 6':     r'(?<=VE[HI])D(?=[^PEDQKR])',
-        'caspase 7':     r'(?<=DEV)D(?=[^PEDQKR])',
-        'caspase 8':     r'(?<=[IL]ET)D(?=[^PEDQKR])',
-        'caspase 9':     r'(?<=LEH)D',
-        'caspase 10':    r'(?<=IEA)D',
-        'chymotrypsin high specificity' : r'([FY](?=[^P]))|(W(?=[^MP]))',
-        'chymotrypsin low specificity':
-            r'([FLY](?=[^P]))|(W(?=[^MP]))|(M(?=[^PY]))|(H(?=[^DMPW]))',
-        'clostripain':   r'R',
-        'cnbr':          r'M',
-        'enterokinase':  r'(?<=[DE]{3})K',
-        'factor xa':     r'(?<=[AFGILTVM][DE]G)R',
-        'formic acid':   r'D',
-        'glutamyl endopeptidase': r'E',
-        'granzyme b':    r'(?<=IEP)D',
-        'hydroxylamine': r'N(?=G)',
-        'iodosobenzoic acid': r'W',
-        'lysc':          r'K',
-        'ntcb':          r'\w(?=C)',
-        'pepsin ph1.3':  r'((?<=[^HKR][^P])[^R](?=[FL][^P]))|'
-                        r'((?<=[^HKR][^P])[FL](?=\w[^P]))',
-        'pepsin ph2.0':  r'((?<=[^HKR][^P])[^R](?=[FLWY][^P]))|'
-                        r'((?<=[^HKR][^P])[FLWY](?=\w[^P]))',
-        'proline endopeptidase': r'(?<=[HKR])P(?=[^P])',
-        'proteinase k':  r'[AEFILTVWY]',
-        'staphylococcal peptidase i': r'(?<=[^E])E',
-        'thermolysin':   r'[^DE](?=[AFILMV])',
-        'thrombin':      r'((?<=G)R(?=G))|'
-                        r'((?<=[AFGILTVM][AFGILTVWA]P)R(?=[^DE][^DE]))',
-        'trypsin':       r'([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))',
-        'trypsin_exception': r'((?<=[CD])K(?=D))|((?<=C)K(?=[HY]))|((?<=C)R(?=K))|((?<=R)R(?=[HR]))'}
-
-    def Update_rules(self,new_enzyme=None,new_rule=None):
-        self.rules[new_enzyme]=new_rule
-        return rules
-
-    def Cleaver(self,sequence, rule, rule_regex=None, exception=None):
-        peptides = []
-        if rule in self.rules:
-            rule = self.rules[rule]
-        else:
-            raise ValueError("Enzyme & Rule Unknown, Please run ButcherShop.Update_rules prior to running ButcherShop.Cleaver")
-        exception = rules.get(exception, exception)
-        ml = self.missed + 2
-        trange = range(ml) #returns range of 0 to ml-1
-        cleavage_sites = deque([0], maxlen=ml) # returns positions of cleavage sites between each other. 
-        if self.min_len is None:
-            min_length = 1
-        cl = 1
-        if exception is not None: #locates postion of c-terminal by-product of cleavage. 
-            exceptions = {x.end() for x in re.finditer(exception, sequence)}
-        for i in it.chain([x.end() for x in re.finditer(rule, sequence)],
-                    [None]):
-            if exception is not None and i in exceptions:
-                continue
-            cleavage_sites.append(i)
-    #         print(cleavage_sites)
-            if cl < ml:
-                cl += 1
-            for j in trange[:cl - 1]:
-                seq = sequence[cleavage_sites[j]:cleavage_sites[-1]]
-                if (len(seq) >= self.min_len):
-                    if (len(seq) <= self.max_len):
-                        peptides.append(seq)
-        return peptides
-
-class Scales:
+class Scales():
     def Mass(peptide):
         mass = {  
         "A": 71.037114,
@@ -375,19 +232,165 @@ class Scales:
         gravy=hydro_sum/len(hydro_list)
         return gravy 
 
+    def Peptide_Inspector(df,target,new_column=None):
+        all_data = []
+        for peptide in df[target]:
+            temp=dict(parser.amino_acid_composition(peptide))
+            all_data.append(temp)
+        df[new_column]=all_data
+        print(f"Peptide inspection is completed! Amino acid dictionaries are stored under {new_column} in dataframe!")
+        return df
+
+
+    def Wishbone(df,bone,split):
+        x=df[bone].value_counts()
+        x2=pd.DataFrame(x,columns=[bone])
+        x3= x2.loc[(x2[bone])>int(split)]
+        x3z=len(x3)
+        x4=x3z/len(x2)*100
+        print(f"The number of proteins with > {split} peptides : %.1f" % x3z)
+        print(f"Ratio of Proteins with > {split} Peptides Identified: %.3f" % x4)
+        return x3,x3z,x4
+
+    def Sweet_N_Sour(set1,set2):
+        common_IDs=list(set(set1)&set(set2))
+        common=len(common_IDs)
+        unique=len(list(set(set1)^set(set2)))
+        unique_set1=list(set(set1)-set(set2))
+        unique_set2=list(set(set2)-set(set1))
+        set1_count=len(unique_set1)
+        set2_count=len(unique_set2)
+        Ratio=(unique/(common+unique))*100
+        print(f"The number of common peptides is: %.3f" % common)
+        print(f"The number of unique peptides in set1 is: %.3f" % set1_count)
+        print(f"The number of unique peptides in set1 is: %.3f" % set2_count)
+        print(f"The Ratio of Unique to Common proteins is: %.3f" % Ratio)
+        return common_IDs,unique_set1, unique_set2
+
 
 class ButcherShop():
 
-    def FullPrep(df,target="Peptide",identifier="Gene",rule="trypsin", min_length=7,exception=None,max_length=100, pH=2.0, min_charge=2.0,missed=0):
+    def __init__(self):
+        self.missed=0
+        self.min_len=6
+        self.max_len=100
+        self.enzyme="trypsin"
+        self.rules = { 'arg-c':         r'R',
+        'asp-n':         r'\w(?=D)',
+        'bnps-skatole' : r'W',
+        'caspase 1':     r'(?<=[FWYL]\w[HAT])D(?=[^PEDQKR])',
+        'caspase 2':     r'(?<=DVA)D(?=[^PEDQKR])',
+        'caspase 3':     r'(?<=DMQ)D(?=[^PEDQKR])',
+        'caspase 4':     r'(?<=LEV)D(?=[^PEDQKR])',
+        'caspase 5':     r'(?<=[LW]EH)D',
+        'caspase 6':     r'(?<=VE[HI])D(?=[^PEDQKR])',
+        'caspase 7':     r'(?<=DEV)D(?=[^PEDQKR])',
+        'caspase 8':     r'(?<=[IL]ET)D(?=[^PEDQKR])',
+        'caspase 9':     r'(?<=LEH)D',
+        'caspase 10':    r'(?<=IEA)D',
+        'chymotrypsin high specificity' : r'([FY](?=[^P]))|(W(?=[^MP]))',
+        'chymotrypsin low specificity':
+            r'([FLY](?=[^P]))|(W(?=[^MP]))|(M(?=[^PY]))|(H(?=[^DMPW]))',
+        'clostripain':   r'R',
+        'cnbr':          r'M',
+        'enterokinase':  r'(?<=[DE]{3})K',
+        'factor xa':     r'(?<=[AFGILTVM][DE]G)R',
+        'formic acid':   r'D',
+        'glutamyl endopeptidase': r'E',
+        'granzyme b':    r'(?<=IEP)D',
+        'hydroxylamine': r'N(?=G)',
+        'iodosobenzoic acid': r'W',
+        'lysc':          r'K',
+        'ntcb':          r'\w(?=C)',
+        'pepsin ph1.3':  r'((?<=[^HKR][^P])[^R](?=[FL][^P]))|'
+                        r'((?<=[^HKR][^P])[FL](?=\w[^P]))',
+        'pepsin ph2.0':  r'((?<=[^HKR][^P])[^R](?=[FLWY][^P]))|'
+                        r'((?<=[^HKR][^P])[FLWY](?=\w[^P]))',
+        'proline endopeptidase': r'(?<=[HKR])P(?=[^P])',
+        'proteinase k':  r'[AEFILTVWY]',
+        'staphylococcal peptidase i': r'(?<=[^E])E',
+        'thermolysin':   r'[^DE](?=[AFILMV])',
+        'thrombin':      r'((?<=G)R(?=G))|'
+                        r'((?<=[AFGILTVM][AFGILTVWA]P)R(?=[^DE][^DE]))',
+        'trypsin':       r'([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))',
+        'trypsin_exception': r'((?<=[CD])K(?=D))|((?<=C)K(?=[HY]))|((?<=C)R(?=K))|((?<=R)R(?=[HR]))'}
+
+    def Update_rules(self,new_enzyme=None,new_rule=None):
+        self.rules[new_enzyme]=new_rule
+        return rules
+
+    # Use to proudce peptides from given sequence
+    def Cleaver(self,sequence, rule, rule_regex=None, exception=None):
+        peptides = []
+        if rule in self.rules:
+            rule = self.rules[rule]
+        else:
+            raise ValueError("Enzyme & Rule Unknown, Please run ButcherShop.Update_rules prior to running ButcherShop.Cleaver")
+        exception = rules.get(exception, exception)
+        ml = self.missed + 2
+        trange = range(ml) #returns range of 0 to ml-1
+        cleavage_sites = deque([0], maxlen=ml) # returns positions of cleavage sites between each other. 
+        if self.min_len is None:
+            min_length = 1
+        cl = 1
+        if exception is not None: #locates postion of c-terminal by-product of cleavage. 
+            exceptions = {x.end() for x in re.finditer(exception, sequence)}
+        for i in it.chain([x.end() for x in re.finditer(rule, sequence)],
+                    [None]):
+            if exception is not None and i in exceptions:
+                continue
+            cleavage_sites.append(i)
+    #         print(cleavage_sites)
+            if cl < ml:
+                cl += 1
+            for j in trange[:cl - 1]:
+                seq = sequence[cleavage_sites[j]:cleavage_sites[-1]]
+                if (len(seq) >= self.min_len):
+                    if (len(seq) <= self.max_len):
+                        peptides.append(seq)
+        return peptides
+
+    #Use to clean up peptides sheets (i.e. protein-peptide.xlsx)
+    def Butcher(self,df,ident1=None,ident2=None,ident3="Pass",t_id=None,t_value=0,acid=["J","Z"],labels=list()):
+        tag=df[labels]
+        raw= df.filter(like=str(ident1), axis=1)
+        raw = pd.concat([raw, tag], axis=1)
+        raw["Peptide"]= raw["Peptide"].str.replace('\W+|\d+',"")
+        raw["Peptide"]= raw["Peptide"].apply(lambda x : x[1:-1])
+        cuts = raw.filter(like=str(ident2), axis=1)
+        if ident3 != "Pass":
+            cuts = raw.filter(like=str(ident3), axis=1)
+            cuts = pd.concat([cuts,tag], axis=1)
+            cuts=cuts.fillna(0)
+            blade=cuts.filter(regex=t_id, axis='columns')
+            trim=blade==t_value
+            trimmings=trim.all(axis=1)
+            cuts=cuts.loc[~trimmings,:]
+            cuts.reset_index(inplace=True)
+            cuts.drop('index', axis=1, inplace=True)
+            return raw, cuts, blade
+        else:    
+            cuts = pd.concat([cuts,tag], axis=1)
+            cuts=cuts.fillna(0)
+            blade=cuts.filter(regex=t_id, axis='columns')
+            trim=blade==t_value
+            trimmings=trim.all(axis=1)
+            cuts=cuts.loc[~trimmings,:]
+            cuts.reset_index(inplace=True)
+            cuts.drop('index', axis=1, inplace=True)
+            return raw, cuts, blade
+
+
+    # Use to generate artifical dataset
+    def Sampler (self,df,target="Peptide",identifier="Gene",rule=self.enzyme, min_length=7,exception=None,max_length=100, pH=2.0, min_charge=2.0,missed=0):
         pep_dict = {}
         pep_dict_list = []
-        string_catcher=re.compile(r'^([A-Z]+)$')
         print(f'You order is being processed and the butcher is preparing your {rule}-cut protein(s)!')
         print("The butcher is working...")
         raw=df[[target, identifier]].set_index(identifier).to_dict()[target]
         print(f"Generating {rule}-cut peptides based on {missed}-missed cleavages. ")
         for gene,peptide in raw.items():
-            pep_dict[gene] = Cleaver(peptide,rule=rule,min_length=min_length,exception=exception,missed_cleavages=missed, max_length=max_length)
+            pep_dict[gene] = self.Cleaver(peptide,rule=rule,min_length=self.min_len,exception=exception,missed_cleavages=self.missed, max_length=self.max_len)
         for k, lst in pep_dict.items():    
             cuts=len(lst)
             for i in range(cuts):
@@ -424,28 +427,6 @@ class ButcherShop():
         peptide =str(P[0])
         ham[peptide]=ham[peptide].apply(",".join) # convert list within df to string
         return ham
-    
-
-
-#Handles Up to 3 Replicates (t_id1-3) per Selection, used for removing amino acids from N-terminal during PEAKS exports with enzyme that cleave at C-terminal. 
-#Can be used to remove M from N-terminal of peptides produced by enzymes which cleave at N-terminal of target aa. 
-    def Butcher(df,ident1=None,ident2=None,ident3=None,t_id1=None,t_id2=None,t_id3=None,t_value=0,acid=["J","Z"],labels=list(),excel_mapper=True,excel_name=None):
-        raw=df.loc[:,df.columns.str.contains(ident1)]
-        tag=df[labels]
-        raw = pd.concat([raw, tag], axis=1)
-        raw["Peptide"]= raw["Peptide"].str.replace('\W+',"")
-        raw["Peptide"]= raw["Peptide"].str.replace('\d+',"")
-        raw["Peptide"]= raw["Peptide"].apply(lambda x : x[1:] if x.startswith(tuple(acid)) else x)
-        cuts=raw.loc[:,raw.columns.str.contains(ident2)]
-        if ident3 != None:
-            cuts=cuts.loc[:,cuts.columns.str.contains(ident3)]
-        cuts = pd.concat([cut, tag], axis=1)
-        blade = cuts.filter(regex=r'^AREA').isin(['0']).all(axis=1)
-        cuts=cuts.loc[~blade]
-        cuts.reset_index(inplace=True)
-        excels=[raw,cuts]
-        Excel_Mapper(excels,excel_name +".xlsx")
-        return raw, cuts
 
     def Marinate (df,target,length,IPC=False,Hydro=False,GRAVY=False,NeutralZ=False,Peptide_Inspector=False):
         print("Marinating peptides...")
@@ -461,42 +442,20 @@ class ButcherShop():
         print("Peptides have been marinated!")
         return df
 
-    def Peptide_Inspector(df,target,new_column=None):
-        all_data = []
-        for peptide in df[target]:
-            temp=dict(parser.amino_acid_composition(peptide))
-            all_data.append(temp)
-        df[new_column]=all_data
-        print(f"Peptide inspection is completed! Amino acid dictionaries are stored under {new_column} in dataframe!")
-        return df
+class Bakery():
 
+    
+    def __init__(self):
+        self.dpi=300
+        self.type='png'
+        self.cmap="PRGn"
+        self.figsize=(8,10)
+        self.font=14
 
-    def Wishbone(df,bone,split):
-        x=df[bone].value_counts()
-        x2=pd.DataFrame(x,columns=[bone])
-        x3= x2.loc[(x2[bone])>int(split)]
-        x3z=len(x3)
-        x4=x3z/len(x2)*100
-        print(f"The number of proteins with > {split} peptides : %.1f" % x3z)
-        print(f"Ratio of Proteins with > {split} Peptides Identified: %.3f" % x4)
-        return x3,x3z,x4
-
-    def Sweet_N_Sour(set1,set2):
-        common_IDs=list(set(set1)&set(set2))
-        common=len(common_IDs)
-        unique=len(list(set(set1)^set(set2)))
-        unique_set1=list(set(set1)-set(set2))
-        unique_set2=list(set(set2)-set(set1))
-        set1_count=len(unique_set1)
-        set2_count=len(unique_set2)
-        Ratio=(unique/(common+unique))*100
-        print(f"The number of common peptides is: %.3f" % common)
-        print(f"The number of unique peptides in set1 is: %.3f" % set1_count)
-        print(f"The number of unique peptides in set1 is: %.3f" % set2_count)
-        print(f"The Ratio of Unique to Common proteins is: %.3f" % Ratio)
-        return common_IDs,unique_set1, unique_set2
-    #----------------------------------------------------------------------------------#
-    # Visulization Functions:
+    def volcano(self,fold=None,stats=None):
+        if fold != None:
+            if stats != None:
+                print("Generating Volcano Plot...")
 
     def Peptide_ICE_cloud(df,x=0,target="aa_comp"):
         word_could_dict = df[target][x]
@@ -592,7 +551,5 @@ class ButcherShop():
         FigTitle=input('Figure Title:')
         plt.savefig(FigTitle,format=fmt,dpi=dpi,bbox_inches="tight")
         plt.show(cake)
-
-
 
 
