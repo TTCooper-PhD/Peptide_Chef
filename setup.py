@@ -19,6 +19,7 @@ setup(
     ],
     keywords='Proteomics',
     python_requires=">=3.6",
+    install_requires=["json","numpy","pandas","seaborn","matplotlib","itertools","re","gzip","urllib"]
     packages=find_packages(include=["Peptide_Chef"]),
     description="Peptide Chef: A Python-based Tool for Proteomic Analyses and Datavisulization",
     license="MIT",

@@ -71,7 +71,7 @@ class Cookbook()
         return(recipie)
 
 
-    def Output_Excel(list_dfs, xls_path):
+    def Outpasta_Excel(list_dfs, xls_path):
         i=len(list_dfs)
         with ExcelWriter(xls_path) as writer:
             for n, df in enumerate(list_dfs):
@@ -79,7 +79,7 @@ class Cookbook()
             writer.save()
         print(f"Good to go Boss, {i} xlsx files(s) Exported")
 
-    def Output_JSON(list_dfs=None,list_dic=None,name_list=None):
+    def Outpasta_JSON(list_dfs=None,list_dic=None,name_list=None):
         if list_dic=None and list_dfs=None and name_list=None:
             raise ValueError("Need to supply list of dictionary or dataframes, in addition to name_list of equal length")
         elif list_dic != None:
@@ -94,7 +94,7 @@ class Cookbook()
                     json.dump(df,j)
         print(f"Good to go Boss, {i} JSON files(s) Exported")
         
-    def PEAKS_Importer(csv,drop_OG=True):
+    def PEAKS_Sampler(csv,drop_OG=True):
         df=pd.read_csv(csv)
         df[["Protein","Y"]]=df['Protein Accession'].str.split("|",1,expand=True)
         df[["Gene","Species"]]=df['Y'].str.split("_",1,expand=True)
