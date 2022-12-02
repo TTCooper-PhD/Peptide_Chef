@@ -1,0 +1,127 @@
+### Data Handling
+import numpy as np
+import pandas as pd
+from pandas import ExcelWriter
+import re
+import itertools as it
+from collections import deque
+from pyteomics import parser, electrochem
+from itertools import combinations
+from urllib.request import urlretrieve
+import gzip
+from functools import lru_cache
+import json
+
+
+
+
+class Bakery():
+
+    
+    def __init__(self):
+        self.dpi=300
+        self.type='png'
+        self.cmap="PRGn"
+        self.figsize=(8,10)
+        self.font=14
+
+    def volcano(self,fold=None,stats=None):
+        if fold != None:
+            if stats != None:
+                print("Generating Volcano Plot...")
+
+    def Peptide_ICE_cloud(df,x=0,target="aa_comp"):
+        word_could_dict = df[target][x]
+        wordcloud = WordCloud(width = 500, height = 500,scale=10,prefer_horizontal=1,relative_scaling=1,min_font_size=18,max_font_size=48,font_step=8,
+                        background_color='white',contour_width=1,contour_color="black" ).generate_from_frequencies(word_could_dict)
+        plt.figure(figsize=(15,8))
+        plt.imshow(wordcloud)
+
+    def Peptide_ICE_bar(df,x=0,target=None,lock=None,key=None):
+        test_dict=df.loc[df[lock] == key][target].iloc[x]
+        x=list(test_dict.keys())
+        y=list(test_dict.values())
+        plt.bar(x,y, color='g')
+
+    def Peptide_ICE_plot(df,x=0,target=None,lock=None,key=None):
+        test_dict=df.loc[df[lock] == key][target].iloc[x]
+        x=list(test_dict.keys())
+        y=list(test_dict.values())
+        plt.plot(x,y, color='g')
+
+    def CorrPie(df,apples,figsize=(16,8),cmap='Blues',title="Title",fontsize=18,pad=16,save_name="Heat_Test",dpi=600,fmt='eps'):
+        og_corr=df[apples]
+        plt.figure(figsize=figsize)
+        mask=np.triu(np.ones_like(og_corr.corr(), dtype=np.bool))
+        heatmap=heatmap = sns.heatmap(og_corr.corr(), mask=mask, vmin=-1, vmax=1, annot=True, cmap=cmap)
+        heatmap.set_title(title, fontdict={'fontsize':fontsize}, pad=pad)
+        plt.savefig(save_name,format=fmt,dpi=dpi,bbox_inches="tight")
+        plt.show()
+
+
+    def WeddingCake(df,x,y,z,dpi=300,s=12,alpha=0.3,edgecolor='k',color="blue",my_viewx=20,my_viewy=50,
+                xlabel="Parameter xlabel",ylabel="Parameter ylabel",zlabel="Parameter zlabel",fmt='png',
+                figx=10,figy=10,xmin=0,xmax=1000,ymin=0,ymax=1000,zmin=0,zmax=1000):
+        fig = plt.figure(figsize=(figx,figy),dpi=dpi)
+        ax = fig.gca(projection='3d')
+        X = df[x]
+        Y = df[y]
+        Z = df[z]
+        ax.scatter(X,Y,Z,color=color,s=s,alpha=alpha,edgecolor=edgecolor)
+        ax.view_init(my_viewx,my_viewy)
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
+        ax.set_zlabel(zlabel)
+        ax.xaxis._axinfo["grid"].update({"linewidth":1, "color" : "grey"})
+        ax.yaxis._axinfo["grid"].update({"linewidth":1, "color" : "grey"})
+        ax.zaxis._axinfo["grid"]['color'] = "k"
+        ax.zaxis._axinfo["grid"]['linestyle'] = "--"
+        ax.set_ylim3d(ymin,ymax)
+        ax.set_xlim3d(xmin,xmax)
+        ax.set_zlim3d(zmin,zmax)
+        FigTitle=input('Figure Title:')
+        plt.savefig(FigTitle,format=fmt,dpi=dpi,bbox_inches="tight")
+        plt.show
+
+    def Cake(df,x,y,dpi=600,s=25,alpha=0.25,edgecolor='k',color="blue",fmt='eps',labsize=18,
+                figx=10,figy=10,xmin=0,xmax=1000,ymin=0,ymax=1000,xlabel="xlabel parameter",ylabel="ylabel parameter",
+            loc=2,pad=1,borderpad=1,frameon=True, show=False):
+        fig, ax = plt.subplots(1,1,figsize=(figx,figy),dpi=dpi)
+        X = df[x]
+        Y = df[y]
+        plt.scatter(X,Y,color=color,s=s, alpha=alpha,edgecolor=edgecolor)
+        plt.xlabel(xlabel, fontsize=labsize)
+        plt.ylabel(ylabel, fontsize=labsize)
+        corr, _ = pearsonr(X, Y)
+        # loc works the same as it does with figures (though best doesn't work)
+        # pad=5 will increase the size of padding between the border and text
+        # borderpad=5 will increase the distance between the border and the axes
+        # frameon=False will remove the box around the text
+        anchored_text = AnchoredText('Pearsons correlation: r = %.3f' % corr, loc=loc,pad=pad,borderpad=borderpad,frameon=frameon)
+        ax.add_artist(anchored_text)
+        FigTitle=input('Figure Title:')
+        plt.savefig(FigTitle,format=fmt,dpi=dpi,bbox_inches="tight")
+
+    def CakePop(df,x,xi,y,yi, figx=10,figy=10,dpi=600,font_scale=1.5,figstyle="white",xlabel="xlabel",ylabel="ylabel",labsize=18,
+            cmapx=-0.3,cmapy=0.0,sizex=10,sizey=200,loc='upper left',pad=1,borderpad=1,frameon=True):
+        sns.set(font_scale=font_scale)
+        cake=sns.set_style(figstyle)
+        cmap = sns.cubehelix_palette(start=cmapx, rot=cmapy, as_cmap=True)
+        X = df[x]
+        Y = df[y]
+        cake=sns.relplot(data=df,
+        x=X, y=Y,
+        hue=xi, size=yi,
+        palette=cmap, sizes=(sizex, sizey))
+        ax = cake.axes[0,0]
+        ####
+        corr, _ = pearsonr(X, Y)
+        anchored_text = AnchoredText('Pearsons correlation: r = %.3f' % corr, loc=loc, prop=dict(size=labsize*0.5),pad=pad,borderpad=borderpad,frameon=frameon)
+        ax.add_artist(anchored_text)
+        ####
+        plt.xlabel(xlabel, fontsize=labsize)
+        plt.ylabel(ylabel, fontsize=labsize)
+        FigTitle=input('Figure Title:')
+        plt.savefig(FigTitle,format=fmt,dpi=dpi,bbox_inches="tight")
+        plt.show(cake)
+
