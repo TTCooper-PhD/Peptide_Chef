@@ -5,13 +5,12 @@ from pandas import ExcelWriter
 import re
 import itertools as it
 from collections import deque
-from pyteomics import parser, electrochem
 from itertools import combinations
 from urllib.request import urlretrieve
 import gzip
 from functools import lru_cache
 import json
-
+from pyteomics import parser, electrochem
 
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------
 

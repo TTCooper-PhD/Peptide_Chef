@@ -1,0 +1,9 @@
+json
+numpy
+pandas
+seaborn
+matplotlib
+itertools
+re
+gzip
+urllib
