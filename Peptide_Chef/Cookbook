@@ -13,7 +13,7 @@ import json
 
 
 # File Handling Functions
-class Cookbook()
+class Cookbook():
 
     def __init__(self,homebrew=False,len_min=7,len_max=60,db_url=None,species=None):
         self.homebrew=homebrew
@@ -33,7 +33,7 @@ class Cookbook()
         if (self.homebrew == True) & (self.takeout==True):
             print("Only one method (homebrew/takeout) can == True...")
             print ("Takeout will be automatically selected...")
-        if takeout is True:
+        if self.takeout is True:
             homebrew=False
             print('Downloading the FASTA file from url...')
             urlretrieve(self.url,'temp.fasta.gz')
@@ -48,7 +48,7 @@ class Cookbook()
             if self.species == None:
                 print("Provide Species identification. This will be the name of the local FASTA file.")
             print("Downloading the FASTA file from local flle...")
-            book = str(Species+".fasta")
+            book = str(f"{Species}+.fasta")
             recipie=pd.DataFrame()
             print("Serving up a homebrew...")
             with fasta.read(book) as menu:
@@ -61,8 +61,7 @@ class Cookbook()
         recipie[['Gene','Identification']] = recipie['ID2'].str.split('_', 1, expand=True)
         recipie.drop(columns=['ID', 'ID2',"db"], inplace=True)
         if measure == True:
-
-             print("<easuring total protein length")
+             print("Measuring total protein length...")
             recipie["Protein_Length"]=recipie["Peptide"].str.len()
         print("Here ya go boss!")
         recipie.name=f"{self.species}_Proteome"
