@@ -56,19 +56,19 @@ class Cookbook():
                     taste=list((info,contents))
                     ingredients.append(taste)
                     recipie=pd.DataFrame(ingredients,columns=['ID','Peptide'])
-            print("Homebrow is Done!")
+            print("Homebrew is Done!")
         recipie[['db', 'UniprotID','ID2']] = recipie['ID'].str.split('|', 2, expand=True)
         recipie[['Gene','Identification']] = recipie['ID2'].str.split('_', 1, expand=True)
         recipie.drop(columns=['ID', 'ID2',"db"], inplace=True)
         if measure == True:
-             print("Measuring total protein length...")
+            print("Measuring total protein length...")
             recipie["Protein_Length"]=recipie["Peptide"].str.len()
         print("Here ya go boss!")
         recipie.name=f"{self.species}_Proteome"
         return(recipie)
 
 
-    def Outpasta_Excel(list_dfs, xls_path):
+    def Outpasta_Excel(self,list_dfs, xls_path):
         i=len(list_dfs)
         with ExcelWriter(xls_path) as writer:
             for n, df in enumerate(list_dfs):
@@ -90,8 +90,9 @@ class Cookbook():
                 with (f"{name}.json","w") as j:
                     json.dump(df,j)
         print(f"Good to go Boss, {i} JSON files(s) Exported")
+
         
-    def PEAKS_Sampler(csv,drop_OG=True):
+    def PEAKS_Sampler(self,csv,drop_OG=True):
         df=pd.read_csv(csv)
         df[["Protein","Y"]]=df['Protein Accession'].str.split("|",1,expand=True)
         df[["Gene","Species"]]=df['Y'].str.split("_",1,expand=True)
@@ -101,11 +102,14 @@ class Cookbook():
             df.drop(columns=['Y',"Found By"], inplace=True)
         return(df)
 
-    def Peptide_Origin(origin,target,Origin_Key=None,Target_Key=None,Origin_Label=None, Target_Label=None):
+
+    def Peptide_Origin(self,origin,target,Origin_Key=None,Target_Key=None,Origin_Label=None, Target_Label=None):
+        """
         # primarily used to transfer whole protein measurments (i.e. aa_length) to data_frame with peptide products. Origin_Key is
         # is used to find 'Merge' points (Target_Key) regardless of frequency (likely multiple peptides for one key/protein).Label is used
         # capture information (peptide lenght, sequence, etc) from origin to target. New_Label is optional, default uses origin label to
         # label newly created target column. 
+        """
         labeler=origin.set_index(Origin_Key).to_dict()[Origin_Label]
         if Target_Label == None:
             target[Origin_Label] = target[Target_Key].map(labeler)
@@ -113,7 +117,7 @@ class Cookbook():
             target[Target_Label] = target[Target_Key].map(labeler)
         return target
 
-    def Pep2Pro(protein,peptides):
+    def Pep2Pro(self, protein,peptides):
         protein = re.sub(r'[^A-Z]', '', protein)
         mask = np.zeros(len(protein), dtype=np.int8)
         for peptide in peptides:
@@ -122,3 +126,4 @@ class Cookbook():
             for i in indices:
                 mask[i:i + len(peptide)] = 1
         return mask.sum(dtype=float) / mask.size
+    
